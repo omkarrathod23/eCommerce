@@ -5,21 +5,42 @@ const Order = require("../model/Order");
 // create-payment-intent
 exports.paymentIntent = async (req, res, next) => {
   try {
-    const product = req.body;
-    const price = Number(product.price);
-    const amount = price * 100;
+    const { price, amount } = req.body;
+    
+    // Validate stripe key
+    if (!secret.stripe_key) {
+      return res.status(500).json({
+        success: false,
+        message: "Stripe key is not configured. Please add STRIPE_KEY to .env file"
+      });
+    }
+    
+    // Use provided amount or calculate from price
+    const finalAmount = amount || (Number(price) * 100);
+    
+    if (!finalAmount || finalAmount <= 0) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid amount. Amount must be greater than 0"
+      });
+    }
+    
     // Create a PaymentIntent with the order amount and currency
     const paymentIntent = await stripe.paymentIntents.create({
       currency: "usd",
-      amount: amount,
+      amount: Math.round(finalAmount),
       payment_method_types: ["card"],
     });
     res.send({
+      success: true,
       clientSecret: paymentIntent.client_secret,
     });
   } catch (error) {
-    console.log(error);
-    next(error)
+    console.log("Payment Intent Error:", error);
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
   }
 };
 // addOrder

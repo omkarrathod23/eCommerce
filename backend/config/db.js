@@ -1,20 +1,23 @@
-const mongoose = require('mongoose');
-const { secret } = require('./secret');
+const mongoose = require("mongoose");
 
-mongoose.set('strictQuery', false);
-
-// local url 
-const DB_URL = 'mongodb://0.0.0.0:27017/shofy'; 
-// mongodb url
-const MONGO_URI = secret.db_url;
+mongoose.set("strictQuery", false);
 
 const connectDB = async () => {
-  try { 
-    await mongoose.connect(MONGO_URI);
-    console.log('mongodb connection success!');
-  } catch (err) {
-    console.log('mongodb connection failed!', err.message);
+  try {
+    const uri = process.env.MONGO_URI;
+
+    if (!uri) {
+      throw new Error("MONGO_URI is undefined");
+    }
+
+    await mongoose.connect(uri);
+    console.log("✅ MongoDB Connected Successfully");
+  } catch (error) {
+    console.error("❌ MongoDB connection failed:", error.message);
+    process.exit(1);
   }
 };
 
 module.exports = connectDB;
+
+

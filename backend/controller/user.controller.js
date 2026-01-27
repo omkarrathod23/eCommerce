@@ -9,11 +9,21 @@ const { secret } = require("../config/secret");
 // sign up
 exports.signup = async (req, res,next) => {
   try {
-    const user = await User.findOne({ email: req.body.email });
+    const { name, email, password } = req.body;
+    
+    // Validation
+    if (!name || !email || !password) {
+      return res.status(400).json({ 
+        status: "failed", 
+        message: "Name, email, and password are required" 
+      });
+    }
+    
+    const user = await User.findOne({ email: email });
     if (user) {
-      res.send({ status: "failed", message: "Email already exists" });
+      return res.status(400).json({ status: "failed", message: "Email already exists" });
     } else {
-      const saved_user = await User.create(req.body);
+      const saved_user = await User.create({ name, email, password });
       const token = saved_user.generateConfirmationToken();
 
       await saved_user.save({ validateBeforeSave: false });

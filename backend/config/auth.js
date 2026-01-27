@@ -12,6 +12,7 @@ const signInToken = (user) => {
       address: user.address,
       phone: user.phone,
       image: user.image,
+      role: user.role,
     },
     secret.token_secret,
     {
@@ -48,8 +49,7 @@ const isAuth = async (req, res, next) => {
 };
 
 const isAdmin = async (req, res, next) => {
-  const admin = await Admin.findOne({ role: "Admin" });
-  if (admin) {
+  if (req.user && (req.user.role === "Admin" || req.user.role === "Super Admin")) {
     next();
   } else {
     res.status(401).send({

@@ -2,7 +2,7 @@ import { apiSlice } from "@/redux/api/apiSlice";
 import { userLoggedIn } from "./authSlice";
 import Cookies from "js-cookie";
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8080";
+import { API_BASE_URL } from "../../api/config";
 
 export const authApi = apiSlice.injectEndpoints({
   overrideExisting: true,
@@ -70,6 +70,52 @@ export const authApi = apiSlice.injectEndpoints({
             userLoggedIn({
               accessToken: result.data.data.token,
               user: result.data.data.user,
+            })
+          );
+        } catch (err) {
+          // do nothing
+        }
+      },
+    }),
+    // login admin
+    loginAdmin: builder.mutation({
+      query: (data) => ({
+        url: `${API_BASE_URL}/api/admin/login`,
+        method: "POST",
+        body: data,
+      }),
+
+      async onQueryStarted(arg, { queryFulfilled, dispatch }) {
+        try {
+          const result = await queryFulfilled;
+
+          Cookies.set(
+            "userInfo",
+            JSON.stringify({
+              accessToken: result.data.token,
+              user: {
+                _id: result.data._id,
+                name: result.data.name,
+                email: result.data.email,
+                role: result.data.role,
+                phone: result.data.phone,
+                image: result.data.image,
+              },
+            }),
+            { expires: 0.5 }
+          );
+
+          dispatch(
+            userLoggedIn({
+              accessToken: result.data.token,
+              user: {
+                _id: result.data._id,
+                name: result.data.name,
+                email: result.data.email,
+                role: result.data.role,
+                phone: result.data.phone,
+                image: result.data.image,
+              },
             })
           );
         } catch (err) {
@@ -183,6 +229,7 @@ export const authApi = apiSlice.injectEndpoints({
 
 export const {
   useLoginUserMutation,
+  useLoginAdminMutation,
   useRegisterUserMutation,
   useConfirmEmailQuery,
   useResetPasswordMutation,

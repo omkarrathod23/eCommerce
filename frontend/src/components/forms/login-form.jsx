@@ -7,7 +7,7 @@ import Link from 'next/link';
 // internal
 import { CloseEye, OpenEye } from '@/svg';
 import ErrorMsg from '../common/error-msg';
-import { useLoginUserMutation } from '@/redux/features/auth/authApi';
+import { useLoginUserMutation, useLoginAdminMutation } from '@/redux/features/auth/authApi';
 import { notifyError, notifySuccess } from '@/utils/toast';
 
 
@@ -18,7 +18,9 @@ const schema = Yup.object().shape({
 });
 const LoginForm = () => {
   const [showPass, setShowPass] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
   const [loginUser, { }] = useLoginUserMutation();
+  const [loginAdmin, { }] = useLoginAdminMutation();
   const router = useRouter();
   const { redirect } = router.query;
   // react hook form
@@ -32,25 +34,39 @@ const LoginForm = () => {
   });
   // onSubmit
   const onSubmit = (data) => {
-    loginUser({
+    const loginFn = isAdmin ? loginAdmin : loginUser;
+    loginFn({
       email: data.email,
       password: data.password,
     })
-      .then((data) => {
-        if (data?.data) {
+      .then((result) => {
+        if (result?.data) {
           notifySuccess("Login successfully");
           router.push(redirect || "/");
         }
         else {
-          notifyError(data?.error?.data?.error)
+          notifyError(result?.error?.data?.error || result?.error?.data?.message || "Login failed")
         }
       })
     reset();
   };
+
   return (
     <form onSubmit={handleSubmit(onSubmit)}>
       <div className="tp-login-input-wrapper">
         <div className="tp-login-input-box">
+          <div className="tp-login-remeber mb-20">
+            <input
+              id="admin_login"
+              type="checkbox"
+              checked={isAdmin}
+              onChange={() => setIsAdmin(!isAdmin)}
+            />
+            <label htmlFor="admin_login" style={{ cursor: 'pointer', fontWeight: 'bold' }}>Login as Admin?</label>
+          </div>
+        </div>
+        <div className="tp-login-input-box">
+
           <div className="tp-login-input">
             <input {...register("email", { required: `Email is required!` })} name="email" id="email" type="email" placeholder="shofy@mail.com" />
           </div>
@@ -78,7 +94,7 @@ const LoginForm = () => {
               <label htmlFor="password">Password</label>
             </div>
           </div>
-          <ErrorMsg msg={errors.password?.message}/>
+          <ErrorMsg msg={errors.password?.message} />
         </div>
       </div>
       <div className="tp-login-suggetions d-sm-flex align-items-center justify-content-between mb-20">
