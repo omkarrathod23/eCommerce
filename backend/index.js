@@ -23,32 +23,25 @@ const globalErrorHandler = require("./middleware/global-error-handler");
 const app = express();
 
 /* ======================
-   CORS CONFIG (FIXED)
+   CORS (FIXED FOR VERCEL)
 ====================== */
-const allowedOrigins = [
-  "http://localhost:3000",
-  "http://localhost:3001",
-  "http://127.0.0.1:3000",
-  "https://e-commerce-7orw.vercel.app"
-];
-
 app.use(
   cors({
-    origin: function (origin, callback) {
-      // allow requests with no origin (Postman, server-to-server)
-      if (!origin) return callback(null, true);
-
-      if (allowedOrigins.includes(origin)) {
-        return callback(null, true);
-      } else {
-        return callback(new Error("Not allowed by CORS"));
-      }
-    },
+    origin: [
+      "http://localhost:3000",
+      "http://localhost:3001",
+      "http://127.0.0.1:3000",
+      "https://e-commerce-7orw-git-main-omkar-rathods-projects.vercel.app",
+      "https://e-commerce-7orw.vercel.app",
+    ],
     credentials: true,
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"],
   })
 );
+
+// IMPORTANT: handle preflight
+app.options("*", cors());
 
 /* ======================
    MIDDLEWARE
@@ -59,7 +52,7 @@ app.use(morgan("dev"));
 app.use(express.static(path.join(__dirname, "public")));
 
 /* ======================
-   DATABASE CONNECTION
+   DATABASE
 ====================== */
 connectDB();
 
@@ -78,20 +71,17 @@ app.use("/api/cloudinary", cloudinaryRoutes);
 app.use("/api/admin", adminRoutes);
 
 /* ======================
-   ROOT ROUTE
+   ROOT
 ====================== */
 app.get("/", (req, res) => {
   res.send("🚀 Backend is running successfully");
 });
 
 /* ======================
-   GLOBAL ERROR HANDLER
+   ERROR HANDLING
 ====================== */
 app.use(globalErrorHandler);
 
-/* ======================
-   404 HANDLER
-====================== */
 app.use((req, res) => {
   res.status(404).json({
     success: false,
